@@ -1,5 +1,5 @@
 import React from 'react'
-import config from '/.config'
+import config from './config'
 import io from 'socket.io-client'
 
 import Paper from '@material-ui/core/Paper'
@@ -14,7 +14,7 @@ class App extends React.Component{
 
     this.state = {
       chat: [],
-      content: '',
+      text: '',
       name: '',
     }
   }
@@ -36,15 +36,73 @@ class App extends React.Component{
     })
   }
 
-  handleContent(event){
+  handleText(evt){
     this.setState({
-      content: event.target.value
+      text: evt.target.value
     })
   }
 
-  handleName(event){
-    this.setState()
+  handleName(evt){
+    this.setState({
+      name: evt.target.value,
+    })
   }
-}
+
+  handleSubmit(evt){
+    // prevents form reloading current page
+    evt.preventDefault()
+
+    //sends new message to server
+    this.socket.emit('message', {
+      name: this.state.name,
+      text: this.state.text,
+    })
+
+    this.setState((state) => {
+      //update chat with usr msg and remove string
+      return {
+        chat: [...state.chat, {
+          name: state.name,
+          text: state.text,
+        }],
+        text: '',
+        }
+      }, this.scrollToBottom)
+    }
+    // ensure window is scrolled down to last message
+    scrollToBottom(){
+      const chat = document.getElementById('chat')
+      chat.scrollTop = chat.scrollHeight
+    }
+
+    render() {
+      return (
+        <div className="App">
+        <Paper id="chat" elevation={3}>
+          {this.state.chat.map((el, index) => {
+            return (
+              <div key={index}>
+                <Typography variant="caption" className="name">
+                  {el.name}
+                </Typography>
+                <Typography variant="body1" className="text">
+                  {el.text}
+                </Typography>
+              </div>
+            );
+          })}
+        </Paper>
+        <BottomBar
+          text={this.state.text}
+          handleText={this.handleText.bind(this)}
+          handleName={this.handleName.bind(this)}
+          handleSubmit={this.handleSubmit.bind(this)}
+          name={this.state.name}
+        />
+      </div>
+      )
+    }
+  }
+
 
 export default App;
